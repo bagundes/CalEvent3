@@ -19,6 +19,12 @@ namespace CalEvent3
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi1",
+                routeTemplate: "api/{controller}/{dtIni}/{dtEnd}",
+                defaults: new { dtIni = RouteParameter.Optional, dtEnd = RouteParameter.Optional }
+            );
         }
     }
 }

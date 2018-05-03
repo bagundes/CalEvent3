@@ -1,0 +1,422 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/css/bootstrap-datepicker.css">
+    <style>
+
+        .pequeno {
+            width: 20%;
+        }
+        .msg {
+            display: none;
+        }
+
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
+    <script>
+        function clearModalAdd() {
+            $('#txtId').val('');
+            $('#txtName').val('');
+            $('#txtDescr').val('');
+            $('#dtStart').val('');
+            $('#dtFin').val('');
+        }
+        function printDate(date1, div) {
+            var date = new Date(date1);
+
+            var year = date.getFullYear();
+
+            var month = (1 + date.getMonth()).toString();
+            month = month.length > 1 ? month : '0' + month;
+
+            var day = date.getDate().toString();
+            day = day.length > 1 ? day : '0' + day;
+
+            return day + '/' + month + '/' + year;
+        }
+        function formatDate(date1, div) {
+
+            var date = null;
+            if (date1.indexOf("/") > -1) {
+                var from = date1.split("/");
+                date = new Date(from[2], from[1] - 1, from[0]);
+            } else {
+                date1 = date1.substring(0, 10);
+                const [year, month, day] = date1.split("-");
+                date = new Date(year, month - 1, day)
+            }
+
+            var year = date.getFullYear();
+
+            var month = (1 + date.getMonth()).toString();
+            month = month.length > 1 ? month : '0' + month;
+
+            var day = date.getDate().toString();
+            day = day.length > 1 ? day : '0' + day;
+
+            return year + '-' + month + '-' + day;
+        }
+        function toDate(date) {
+            const [day, month, year] = date.split("-");
+            console.log((new Date(year, month - 1, day)).toISOString());
+            return (new Date(year, month - 1, day)).toISOString();
+        }
+        function AlertSuccess(message) {
+            $("#lbSuccessMsg").text(message);
+            $("#alertSuccess").fadeTo(2000, 500).slideUp(500, function () {
+                $("#alertSuccess").slideUp(500);
+                $("#lbSuccessMsg").text("");
+            });
+
+        }
+        function AlertError(message) {
+            $("#lbErrorMsg").text(message);
+            $("#alertError").fadeTo(2000, 500).slideUp(500, function () {
+                $("#alertError").slideUp(500);
+                $("#lbErrorMsg").text("");
+            });
+
+        }
+        function appendEvents(data) {
+
+            if (data == null) {
+                $('#EventsList tbody').append('<tr>'
+                    + '<td colspan=6>No event found</td>');
+            } else {
+                $('#EventsList tbody').append('<tr>'
+                    + '<td class="id">' + data.id + '</td>'
+                    + '<td>' + data.name + '</td>'
+                    + '<td>' + data.description + '</td>'
+                    + '<td>' + printDate(data.dtIni) + '</td>'
+                    + '<td>' + printDate(data.dtEnd) + '</td>'
+                    + '<td>'
+                    + '<button class="btEdit btn btn-default btn-sm" aria-label="Left Align">'
+                    + '<span class="glyphicon glyphicon glyphicon-pencil" aria-hidden="true"></span>'
+                    + '</button>'
+                    + '<button type="button" class="btDelete btn btn-default btn-sm" aria-label="Left Align">'
+                    + '<span class="glyphicon glyphicon glyphicon-trash" aria-hidden="true"></span>'
+                    + '</button>'
+                    + '</td>'
+                    + '</tr>');
+            }
+        }
+        function LoadGrid(dtIni, dtEnd) {
+            let url = "";
+            if (dtIni != null && dtIni != "") {
+                dtEnd = (dtEnd != null && dtEnd != "") ? dtEnd : dtIni;
+                url = '/' + dtIni + '/' + dtEnd;
+            }
+
+            DeleteGrid();
+            $.get("api/Events" + url, function (data, status) {
+                
+                let c = data.length;
+
+                if (c > 0) {
+                    for (var i = 0; i < c; i++) {
+                        appendEvents(data[i]);
+                    }
+                } else {
+                    appendEvents(null);
+                }
+            });
+        }
+        function DeleteGrid() {
+            var par = $('#EventsList tbody tr'); //tr
+            par.remove();
+        }
+    </script>
+    <title>Events</title>
+</head>
+<body>
+
+    <div id="alertError" class="msg alert alert-danger">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <strong>Error!</strong><span id="lbErrorMsg"></span>
+    </div>
+    <div id="alertSuccess" class="msg alert alert-success">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <strong>Success!</strong><span id="lbSuccessMsg"></span>
+    </div>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    Calendar - Events
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-sm-4">
+                <div id="datepicker" ></div>
+            </div>
+
+            <div class="col-sm-8">
+                <div class="button-group">
+                    <button type="button" id="btAdd" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addEvent" aria-label="Left Align">
+                        <span class="glyphicon glyphicon glyphicon-plus" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" id="btFind" class="btn btn-default btn-sm" data-toggle="modal" data-target="#filterModal" aria-label="Left Align">
+                        <span class="glyphicon glyphicon glyphicon-search" aria-hidden="true"></span>
+                    </button>
+                    <span class="button-group-addon" id="basic-addon1">Date <span id="lbDtIni"></span> to <span id="lbDtFin"></span></span>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <big><strong>Events</strong></big>
+                        <table id="EventsList" class="table table-striped table-responsive table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Descr</th>
+                                    <th>Date Start</th>
+                                    <th>Date End</th>
+                                    <th>Options</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODALS -->
+    <!-- Modal add-->
+    <div class="modal fade" id="addEvent" tabindex="-1" role="dialog" aria-labelledby="addEventModal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEventModal">Add Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form>
+                    <input type="hidden" id="txtId" />
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="txtName">Name</label>
+                            <input type="text" class="form-control" id="txtName" aria-describedby="nameHelp" placeholder="Event name" required>
+                            <small id="nameHelp" class="form-text text-muted">Inform event name</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="txtDescr">Description</label>
+                            <input type="text" class="form-control" id="txtDescr" aria-describedby="descHelp" placeholder="Event description">
+                            <small id="descHelp" class="form-text text-muted">Inform event description</small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="dtStart">Start Date</label>
+                                <input type="date" class="form-control" id="dtStart" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="dtFin">End Date</label>
+                                <input type="date" class="form-control" id="dtFin" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <input type="submit" id="btSaveEvent" class="btn btn-primary" data-loading-text="Saving..." value="Save">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Modal filter-->
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form>
+                    <div class="modal-body">
+                        <!--div class="form-group">
+                            <label for="txtNameDesc">Name/Description</label>
+                            <input type="text" class="form-control" id="txtNameDesc" aria-describedby="descHelp" placeholder="Part Name or Event description">
+                            <small id="descHelp" class="form-text text-muted">Filter by name or description</small>
+                        </div-->
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="dtFilterStart">Start Date</label>
+                                <input type="date" class="form-control" id="dtFilterStart">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="dtFilterFin">End Date</label>
+                                <input type="date" class="form-control" id="dtFilterFin">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <input type="submit" id="btFilter" class="btn btn-primary" value="Filter">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://raw.githubusercontent.com/uxsolutions/bootstrap-datepicker/master/js/bootstrap-datepicker.js"></script>
+    <script>
+        $(function () {
+            //////
+            $(document).ready(function () {
+
+                $('#lbDtIni').text('01/01/2000');
+                $('#lbDtFin').text('31/12/2020');
+                $("#alertError").hide();
+                $("#alertSuccess").hide();
+                LoadGrid(null, null);
+            });
+            //////
+            $('#datepicker').datepicker({
+                format: "dd/mm/yyyy"
+            });
+            //////
+            $(document).on('click', '.btEdit', function () {
+                clearModalAdd();
+
+                $(this).closest('tr').find('.id').each(function (i, e) {
+                    let id = e.textContent;
+
+                    $.get("api/Events/" + id, function (data, status) {
+                        let c = data.length;
+                        console.log(data);
+
+                        $('#txtId').val(data.id);
+                        $('#txtName').val(data.name);
+                        $('#txtDescr').val(data.description);
+                        $('#dtStart').val(formatDate(data.dtIni));
+                        console.log(formatDate(data.dtEnd));
+                        $('#dtFin').val(formatDate(data.dtEnd));
+
+                    });
+
+                    $('#addEvent').modal('show');
+
+                });
+            });
+            //////
+            $('#btSaveEvent').click(function (e) {
+                e.preventDefault();
+
+                let update = $('#txtId').val() > 0;
+                let values = {
+                    name: $('#txtName').val(),
+                    description: $('#txtDescr').val(),
+                    dtIni: $('#dtStart').val(),
+                    dtEnd: $('#dtFin').val(),
+                };
+                console.log($('#txtId').val());
+
+                if (update) {
+                    $.ajax({
+                        type: "PUT",
+                        url: "api/Events/" + $('#txtId').val(),
+                        data: values,
+                        success: function () {
+                            LoadGrid(null, null);
+                            $('#addEvent').modal('hide');
+                            AlertSuccess("Event Added");
+                        },
+                        //error: AlertError("It's not possible add event")
+                    });
+                } else {
+                    $.ajax({
+                        type: "POST",
+                        url: "api/Events",
+                        data: values,
+                        success: function () {
+                            LoadGrid(null, null); 
+                            $('#addEvent').modal('hide');
+                            AlertSuccess("Event Added");
+                        },
+                        //error: AlertError("It's not possible add event")
+                    });
+                }
+
+                
+            });
+            //////
+            $('#datepicker').on('changeDate', function () {
+
+                let date = $('#datepicker').datepicker('getFormattedDate');
+
+                $('#lbDtIni').text(date);
+                $('#lbDtFin').text(date);
+
+                DeleteGrid();
+
+                LoadGrid(formatDate(date), formatDate(date));
+
+            });
+            //////
+            $(document).on('click', '.btDelete', function () {
+
+                let tr = $(this).closest('tr');
+                let id = null;
+                tr.find('.id').each(function (i, e) {
+                    id = e.textContent;
+                });
+
+                tr.fadeOut(400, function () {
+
+                    $.ajax({
+                        type: "DELETE",
+                        url: "api/Events/" + id,
+                        success: function () {
+                            AlertSuccess("Event deleted");
+                            tr.remove();
+                        },
+                        //error: AlertError("It's not possible delete event")
+                    });
+                });
+            });
+            //////
+            $('#btFilter').click(function (e) {
+                e.preventDefault();
+                let dtIni = $('#dtFilterStart').val()
+                let dtFin = $('#dtFilterFin').val()
+
+                if (dtFin == null || dtFin == "")
+                    dtIni = dtFin;
+
+                $('#dtIni').text(dtIni);
+                $('#dtFin').text(dtFin);
+
+                LoadGrid(dtIni, dtFin); 
+                $('#filterModal').modal('hide');
+               
+            });
+        });
+    </script>
+</body>
+</html>
